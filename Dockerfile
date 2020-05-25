@@ -8,5 +8,6 @@ RUN yarn install
 ADD . .
 RUN yarn build
 
+ENV NODE_ENV=production
 CMD [ "node", "." ]
 EXPOSE 8081

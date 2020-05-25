@@ -2,11 +2,7 @@ version: '3'
 
 services:
   drawpile-ldap-auth-server:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    environment:
-      - NODE_ENV=production
+    image: bytewave81/drawpile-ldap-auth-server:latest
     volumes: 
       - ./config.toml:/usr/src/app/config.toml:ro
     ports:
