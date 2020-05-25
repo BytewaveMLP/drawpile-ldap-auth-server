@@ -1,8 +1,8 @@
 import express from "express";
 import * as ldapts from 'ldapts';
-require('json5/lib/register');
 require('source-map-support').install();
-const config = require('../config.json5') as ServerConfig;
+require('toml-require').install();
+const config = require('../config.toml') as ServerConfig;
 
 const DEFUALT_PORT = 8081;
 
@@ -11,17 +11,13 @@ interface ServerConfig {
 	signingKey: string;
 	allowGuests?: boolean;
 	ldap: ldapts.ClientOptions & {
-		creds: {
-			bindDN: string;
-			password: string;
-		};
+		bindDN: string;
+		bindPW: string;
 		userDN: string;
 		userSearchFilter: string;
-		group?: {
-			DN: string;
-			name: string;
-			memberOfAttribute: string;
-		};
+		groupDN?: string;
+		groupName?: string;
+		memberOfAttribute: string;
 	};
 }
 
@@ -41,7 +37,7 @@ app.get('/', async (req, res) => {
 
 	const authResponse: AuthResponse = {
 		status: 'auth',
-		ingroup: config.ldap.group?.name,
+		ingroup: config.ldap.groupName,
 	};
 
 	if (!req.body.password && !config.allowGuests) { // attempted guest auth but no password presented
@@ -49,7 +45,7 @@ app.get('/', async (req, res) => {
 		return res.json(authResponse);
 	}
 
-	await ldapClient.bind(config.ldap.creds.bindDN, config.ldap.creds.password);
+	await ldapClient.bind(config.ldap.bindDN, config.ldap.bindPW);
 
 	let searchResults: ldapts.SearchResult;
 

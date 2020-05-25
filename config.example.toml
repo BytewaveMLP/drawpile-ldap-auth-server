@@ -1,0 +1,11 @@
+[ldap]
+url = "ldap://localhost:389"
+bindDN = "cn=admin,dc=example,dc=com"
+bindPW = "admin"
+userDN = "ou=users,dc=example,dc=com"
+userSearchFilter = "(uid=%u)"
+
+# Uncomment if you only want members of a specific group to be able to
+# authenticate
+#groupDN = "ou=groups,dc=example,dc=com"
+#groupName = "drawpile"
