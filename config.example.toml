@@ -9,9 +9,10 @@ userDN = "ou=users,dc=example,dc=com"
 userSearchFilter = "(uid=%u)"
 # DN which contains your LDAP groups
 groupDN = "ou=drawpile,ou=groups,dc=example,dc=com"
-# The name of the group the user must belong to in order to join sessions at all
-#requiredGroup = "drawpile"
-groupObjectClass = "groupOfNames"
-memberAttribute = "member"
-# LDAP group representing your moderators; will set mod flag if the user is in this group
-# modGroup = "moderator"
+memberOfAttribute = "memberOf"
+
+[ldap.flagGroups]
+# Defines a mapping between LDAP groups and Drawpile flags
+# FLAG = "LDAP group"
+MOD = "moderator"
+HOST = "host"

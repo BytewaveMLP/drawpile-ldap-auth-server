@@ -16,9 +16,10 @@ interface ServerConfig {
 		userDN: string;
 		userSearchFilter: string;
 		groupDN: string;
-		groupObjectClass: string;
-		memberAttribute: string;
-		modGroup?: string;
+		memberOfAttribute: string;
+		flagGroups: {
+			[flag: string]: string;
+		}
 	};
 }
 
@@ -96,6 +97,8 @@ async function findUser(username: string): Promise<LDAPUser | null> {
 		const searchResults = await ldapClient.search(config.ldap.userDN, {
 			filter: searchFilter,
 		});
+
+		log.debug(JSON.stringify(searchResults, undefined, 2));
 
 		return searchResults.searchEntries[0] as LDAPUser;
 	} catch (err) {
@@ -188,16 +191,54 @@ app.post('/', async (req, res) => {
 
 	log.info(`Username ${req.body.username} successfully authenticated`);
 
-	authResponse.token = createDrawpileAuthToken({
+	const flags: string[] = [];
+
+	await ldapClient.bind(config.ldap.bindDN, config.ldap.bindPW);
+	for (const flag in config.ldap.flagGroups) {
+		const groupDN = `cn=${config.ldap.flagGroups[flag]},${config.ldap.groupDN}`;
+		const searchFilter = `(&${config.ldap.userSearchFilter.replace('%u', req.body.username)}(${config.ldap.memberOfAttribute}=${groupDN}))`;
+
+		log.info(`Checking if ${req.body.username} is a member of ${groupDN}`);
+		log.debug(`Using search filter ${searchFilter}`);
+
+		try {
+			const searchResults = await ldapClient.search(config.ldap.userDN, {
+				filter: searchFilter,
+			});
+
+			log.debug(JSON.stringify(searchResults, undefined, 2));
+
+			if (searchResults.searchEntries.length === 0) {
+				log.info(`${req.body.username} is a NOT member of ${groupDN}`);
+				continue;
+			}
+
+			log.info(`${req.body.username} is a member of ${groupDN}; granting ${flag}`);
+			flags.push(flag);
+		} catch (err) {
+			log.debug('Caught error: ' + err);
+			if (err.code !== 0x20) throw err;
+			log.info(`${req.body.username} is a NOT member of ${groupDN}`);
+		}
+	}
+	await ldapClient.unbind();
+
+	const authPayload: DrawpileAuthPayload = {
 		username: req.body.username,
 		iat: Date.now(),
 		uid: user.entryUUID,
+		flags,
 		group: req.body.group,
 		nonce: req.body.nonce,
-	});
+	};
+	log.debug('Auth payload: ' + JSON.stringify(authPayload));
+
+	authResponse.token = createDrawpileAuthToken(authPayload);
 	log.debug('Auth response: ' + JSON.stringify(authResponse));
 	return res.json(authResponse);
 });
 
+log.debug('Starting with config:');
+log.debug(JSON.stringify(config, undefined, 2));
 app.listen(config.port || DEFUALT_PORT);
 log.info('Listening on http://127.0.0.1:' + (config.port || DEFUALT_PORT));

@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
     volumes: 
       - ./config.toml:/usr/src/app/config.toml:ro
     ports:
