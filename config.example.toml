@@ -1,11 +1,17 @@
+# Base64-encoded Ed25519 private key
+signingKey = ""
+
 [ldap]
 url = "ldap://localhost:389"
 bindDN = "cn=admin,dc=example,dc=com"
 bindPW = "admin"
 userDN = "ou=users,dc=example,dc=com"
 userSearchFilter = "(uid=%u)"
-
-# Uncomment if you only want members of a specific group to be able to
-# authenticate
-#groupDN = "ou=groups,dc=example,dc=com"
-#groupName = "drawpile"
+# DN which contains your LDAP groups
+groupDN = "ou=drawpile,ou=groups,dc=example,dc=com"
+# The name of the group the user must belong to in order to join sessions at all
+#requiredGroup = "drawpile"
+groupObjectClass = "groupOfNames"
+memberAttribute = "member"
+# LDAP group representing your moderators; will set mod flag if the user is in this group
+# modGroup = "moderator"

@@ -1,25 +1,10 @@
-import crypto from 'crypto';
+import crypto, { sign } from 'crypto';
 import express from 'express';
 import * as ldapts from 'ldapts';
 import winston from 'winston';
 
 require('source-map-support').install();
 require('toml-require').install();
-
-const config = require('../config.toml') as ServerConfig;
-
-const log = winston.createLogger({
-	level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-	format: winston.format.combine(
-		winston.format.timestamp(),
-		winston.format.printf(info => `[${info.timestamp}] ${info.level}: ${info.message}`),
-	),
-	transports: [
-		new winston.transports.Console(),
-	],
-});
-
-const DEFUALT_PORT = 8081;
 
 interface ServerConfig {
 	port?: number;
@@ -30,9 +15,10 @@ interface ServerConfig {
 		bindPW: string;
 		userDN: string;
 		userSearchFilter: string;
-		groupDN?: string;
-		groupName?: string;
-		memberOfAttribute: string;
+		groupDN: string;
+		groupObjectClass: string;
+		memberAttribute: string;
+		modGroup?: string;
 	};
 }
 
@@ -58,25 +44,47 @@ interface LDAPUser {
 	[key: string]: string | string[] | Buffer | Buffer[];
 }
 
+const config = require('../config.toml') as ServerConfig;
+const DEFUALT_PORT = 8081;
+const signingKey = crypto.createPrivateKey({
+	key: Buffer.from(config.signingKey, 'base64'),
+	format: 'der',
+	type: 'pkcs8',
+});
+
+const log = winston.createLogger({
+	level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+	format: winston.format.combine(
+		winston.format.timestamp(),
+		winston.format.printf(info => `[${info.timestamp}] ${info.level}: ${info.message}`),
+	),
+	transports: [
+		new winston.transports.Console(),
+	],
+});
+
+
 const ldapClient = new ldapts.Client(config.ldap);
 
 const app = express();
 app.use(express.json());
 
+const btoa = (data: string) => Buffer.from(data, 'utf8').toString('base64');
+
 function createDrawpileAuthToken(payload: DrawpileAuthPayload, avatar?: string | Buffer) {
 	const payloadJSON = JSON.stringify(payload);
-	const signingKey = `-----BEGIN PRIVATE KEY-----
-${config.signingKey}
------END PRIVATE KEY-----`;
-	const signature = crypto.sign(null, Buffer.from(payloadJSON, 'utf8'), signingKey).toString('base64');
 
 	// version.payload.avatar?.signature
 	const components = [
 		avatar ? '2': '1',
-		Buffer.from(payloadJSON).toString('base64'),
-		signature
+		btoa(payloadJSON),
 	];
-	if (avatar) components.splice(2, 0, typeof avatar === 'string' ? avatar : avatar.toString('base64'));
+
+	const signature = crypto.sign(null, Buffer.from(components.join('.'), 'utf8'), signingKey).toString('base64');
+
+	if (avatar) components.push(typeof avatar === 'string' ? avatar : avatar.toString('base64'));
+	components.push(signature);
+
 	return components.join('.');
 }
 
@@ -114,31 +122,48 @@ async function loginUser(username: string, password: string): Promise<LDAPUser |
 	return user;
 }
 
-app.get('/', async (req, res) => {
+app.use((req, res, next) => {
 	log.info('Request received from ' + req.ip);
+	log.debug('Request method: ' + req.method);
+	log.debug('Request URI: ' + req.url);
+	log.debug('Request body: ' + JSON.stringify(req.body));
 
+	next();
+});
+
+app.post('/', async (req, res) => {
 	if (!req.body.username) return res.status(400).send('Bad request');
 
 	const authResponse: AuthResponse = {
 		status: 'auth',
-		ingroup: config.ldap.groupName,
+		ingroup: req.body.group,
 	};
 
-	if (!req.body.password) { // auth server request
+	if (!req.body.password) { // server request
+		log.info(`Checking if username ${req.body.username} is available for guest access`);
+
 		if (!config.allowGuests) {
+			log.info(`Guest login disabled`);
 			return res.json(authResponse);
 		}
 
 		const user = await findUser(req.body.username);
 		if (user) {
+			log.info(`Username ${req.body.username} is taken by a registered user`);
 			return res.json(authResponse); // auth required, username taken
 		}
 
+		log.info(`Username ${req.body.username} is available`);
 		authResponse.status = 'guest';
 		return res.json(authResponse);
 	}
 
 	// since password is set, this is a login request
+
+	// missing nonce, invalid request
+	if (!req.body.nonce) return res.status(400).send('Bad request');
+
+	log.info(`Attempting to authenticate user ${req.body.username}`);
 
 	let user: LDAPUser | null = null;
 
@@ -163,14 +188,14 @@ app.get('/', async (req, res) => {
 
 	log.info(`Username ${req.body.username} successfully authenticated`);
 
-	const authPayload: DrawpileAuthPayload = {
+	authResponse.token = createDrawpileAuthToken({
 		username: req.body.username,
 		iat: Date.now(),
 		uid: user.entryUUID,
-		nonce: crypto.randomBytes(8).toString('hex'),
-	};
-
-	authResponse.token = createDrawpileAuthToken(authPayload);
+		group: req.body.group,
+		nonce: req.body.nonce,
+	});
+	log.debug('Auth response: ' + JSON.stringify(authResponse));
 	return res.json(authResponse);
 });
 

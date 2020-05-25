@@ -3,3 +3,5 @@ node_modules/
 
 yarn-error.log
 /config.toml
+testkey.pem
+drawpile-config.ini

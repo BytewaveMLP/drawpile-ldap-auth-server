@@ -12,6 +12,20 @@ services:
     networks:
       - default
       - ciderandsaddle
+  drawpile:
+    image: callaa/drawpile-srv:2.1
+    volumes:
+      - drawpile:/home/drawpile
+      - ./drawpile-config.ini:/home/drawpile/drawpile-config.ini:ro
+    command: --sessions /home/drawpile/sessions --config /home/drawpile/drawpile-config.ini --extauth http://127.0.0.1:8081
+    ports:
+      - 27750:27750
+    networks:
+      - default
+      - ciderandsaddle
+
+volumes: 
+  drawpile:
 
 networks: 
   ciderandsaddle:

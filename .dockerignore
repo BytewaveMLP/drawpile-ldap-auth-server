@@ -8,6 +8,9 @@ dist/
 config.example.toml
 config.toml
 docker-compose.yml
+docker-compose.dev.yml
 LICENSE
 README.md
 yarn-error.log
+drawpile-config.ini
+testkey.pem
