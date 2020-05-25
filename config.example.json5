@@ -1,0 +1,15 @@
+{
+  ldap: {
+    url: 'ldap://localhost:389',
+    creds: {
+      bindDN: 'cn=admin,dc=example,dc=com',
+      password: 'admin',
+    },
+    userDN: 'ou=users,dc=example,dc=com',
+    userSearchFilter: '(uid=%u)',
+    group: {
+      dn: 'ou=groups,dc=example,dc=com',
+      name: 'drawpile'
+    },
+  },
+}

@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "es2018",
+    "module": "commonjs",
+    "incremental": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    
+    "removeComments": false,
+    "esModuleInterop": true,
+    "preserveConstEnums": true,
+    "alwaysStrict": true,
+
+    "noImplicitAny": true,
+    "strict": true
+    // "strictNullChecks": true,
+    // "strictPropertyInitialization": true,
+    // "strictFunctionTypes": true,
+    // "strictBindCallApply": true
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts"
+  ]
+}

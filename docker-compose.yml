@@ -1,0 +1,9 @@
+version: "3"
+
+service:
+	drawpile-ldap-auth-server:
+		build:
+			context: .
+			dockerfile: Dockerfile
+		ports:
+			- 8081:8081
