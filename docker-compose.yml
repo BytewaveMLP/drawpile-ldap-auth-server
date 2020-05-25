@@ -1,9 +1,11 @@
 version: "3"
 
-service:
-	drawpile-ldap-auth-server:
-		build:
-			context: .
-			dockerfile: Dockerfile
-		ports:
-			- 8081:8081
+services:
+  drawpile-ldap-auth-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes: 
+      - ./config.toml:/usr/src/app/config.toml:ro
+    ports:
+      - 8081:8081

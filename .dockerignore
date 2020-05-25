@@ -1,0 +1,13 @@
+.git/
+node_modules/
+dist/
+
+.editorconfig
+.eslintrc.js
+.gitignore
+config.example.toml
+config.toml
+docker-compose.yml
+LICENSE
+README.md
+yarn-error.log
