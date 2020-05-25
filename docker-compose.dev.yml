@@ -9,3 +9,10 @@ services:
       - ./config.toml:/usr/src/app/config.toml:ro
     ports:
       - 8081:8081
+    networks:
+      - default
+      - ciderandsaddle
+
+networks: 
+  ciderandsaddle:
+    external: true
