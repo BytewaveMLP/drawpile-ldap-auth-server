@@ -1,4 +1,4 @@
-import crypto, { sign } from 'crypto';
+import crypto from 'crypto';
 import express from 'express';
 import * as ldapts from 'ldapts';
 import winston from 'winston';
