@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "description": "A Drawpile-compatible auth server backed by LDAP",
   "main": "dist/index.js",
-  "repository": "https://git.ciderandsaddle.club/ciderandsaddle/drawpile-ldap-auth-server",
-  "author": "Bytewave",
+  "repository": "https://github.com/BytewaveMLP/drawpile-ldap-auth-server",
+  "author": {
+    "name": "Eliot Partridge",
+    "email": "byte@code.horse",
+    "url": "https://code.horse"
+  },
   "license": "MIT",
-  "private": true,
   "engines": {
     "node": ">=12.0.0"
   },
