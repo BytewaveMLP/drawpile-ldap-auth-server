@@ -89,12 +89,26 @@ First, copy `config.example.toml` to `config.toml`. Then, open it in your favori
 
 For more details on TOML syntax, see [the README](https://github.com/toml-lang/toml#user-content-example).
 
+Additionally, there are a few environment variables which may be used:
+
+- `DRAWPILE_AUTH_TOKEN_SIGNING_KEY`
+  
+  The private Ed25519 key for Drawpile auth tokens. See ["Generating a token keypair"](#generating-a-token-keypair) below for instructions to generate this. Setting this value in the environment overrides the value in `config.toml`.
+
+- `LOG_LEVEL`
+
+  The [Winston log level](https://github.com/winstonjs/winston#logging-levels) to use. By default, this is `info` if `NODE_ENV` is `production`, and `debug` otherwise. It's probably best to leave this as the default; setting this to anything below `debug` may expose sensitive information in your logs, and should only be used for debugging.
+
+- `NODE_ENV`
+
+  The environment this instance is running under. By default, this is assumed to be `development`, in which case debug-level logging output is enabled (unless overridden via `LOG_LEVEL`). Set this to `production` in an actual deployment (the Docker image does this for you).
+
 #### Generating a token keypair
 
 Drawpile uses libsodium to handle token verification, which expects a "raw" format Ed25519 public key (ie, no container format). However, OpenSSL (and therefore Node) operate on containerized keys using DER and PEM formats. As such, you will need to generate your keypair in a very specific manner.
 
 ```shell
-# generate private key; this goes in config.toml
+# generate private key; this goes in config.toml or in your environment as DRAWPILE_AUTH_TOKEN_SIGNING_KEY
 $ PRIVKEY="$(openssl genpkey -algorithm ed25519 -outform DER | openssl base64)"; echo $PRIVKEY
 # generate public key; this goes in your Drawpile config.ini
 $ echo "$PRIVKEY" | openssl base64 -d | openssl pkey -inform DER -outform DER -pubout | tail -c +13 | openssl base64
