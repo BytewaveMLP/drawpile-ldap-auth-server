@@ -6,6 +6,6 @@ insert_final_newline = true
 indent_style = tab
 charset = utf-8
 
-[*.{json,toml,yml}]
+[*.{json,toml,yml,md}]
 indent_style = space
 indent_size = 2
