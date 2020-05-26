@@ -7,7 +7,6 @@
 
 ## Table of Contents
 
-- [Background](#background)
 - [Install](#install)
   - [Prerequisites](#prerequisites)
   - [Docker](#docker)
@@ -18,8 +17,6 @@
 - [Maintainers](#maintainers)
 - [Contribute](#contribute)
 - [License](#license)
-
-## Background
 
 ## Install
 
