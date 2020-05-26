@@ -89,11 +89,16 @@ function createDrawpileAuthToken(payload: DrawpileAuthPayload, avatar?: string |
 	return components.join('.');
 }
 
-async function findUser(username: string): Promise<LDAPUser | null> {
+async function findUser(username: string, group?: string): Promise<LDAPUser | null> {
 	await ldapClient.bind(config.ldap.bindDN, config.ldap.bindPW);
 
 	try {
-		const searchFilter = config.ldap.userSearchFilter.replace('%u', username);
+		let searchFilter = config.ldap.userSearchFilter.replace('%u', username);
+		if (group) {
+			const groupDN = `cn=${group},${config.ldap.groupDN}`;
+			searchFilter = `(&${config.ldap.userSearchFilter.replace('%u', username)}(${config.ldap.memberOfAttribute}=${groupDN}))`;
+		}
+
 		const searchResults = await ldapClient.search(config.ldap.userDN, {
 			filter: searchFilter,
 		});
@@ -125,6 +130,12 @@ async function loginUser(username: string, password: string): Promise<LDAPUser |
 	return user;
 }
 
+async function isUserInGroup(username: string, group: string): Promise<boolean> {
+	const user = await findUser(username, group);
+	if (user) return true;
+	return false;
+}
+
 app.use((req, res, next) => {
 	log.info('Request received from ' + req.ip);
 	log.debug('Request method: ' + req.method);
@@ -150,7 +161,7 @@ app.post('/', async (req, res) => {
 			return res.json(authResponse);
 		}
 
-		const user = await findUser(req.body.username);
+		const user = await findUser(req.body.username, req.body.group);
 		if (user) {
 			log.info(`Username ${req.body.username} is taken by a registered user`);
 			return res.json(authResponse); // auth required, username taken
@@ -184,7 +195,7 @@ app.post('/', async (req, res) => {
 	}
 
 	if (!user) {
-		log.info(`Username ${req.body.username} not found in LDAP`);
+		log.info(`Username ${req.body.username} not found${req.body.group ? `, or not a member of group ${req.body.group}` : ''}`);
 		authResponse.status = 'badpass';
 		return res.json(authResponse);
 	}
@@ -195,30 +206,14 @@ app.post('/', async (req, res) => {
 
 	await ldapClient.bind(config.ldap.bindDN, config.ldap.bindPW);
 	for (const flag in config.ldap.flagGroups) {
-		const groupDN = `cn=${config.ldap.flagGroups[flag]},${config.ldap.groupDN}`;
-		const searchFilter = `(&${config.ldap.userSearchFilter.replace('%u', req.body.username)}(${config.ldap.memberOfAttribute}=${groupDN}))`;
-
-		log.info(`Checking if ${req.body.username} is a member of ${groupDN}`);
-		log.debug(`Using search filter ${searchFilter}`);
-
-		try {
-			const searchResults = await ldapClient.search(config.ldap.userDN, {
-				filter: searchFilter,
-			});
-
-			log.debug(JSON.stringify(searchResults, undefined, 2));
-
-			if (searchResults.searchEntries.length === 0) {
-				log.info(`${req.body.username} is a NOT member of ${groupDN}`);
-				continue;
-			}
-
-			log.info(`${req.body.username} is a member of ${groupDN}; granting ${flag}`);
+		const group = config.ldap.flagGroups[flag];
+		log.info(`Checking if ${req.body.username} is a member of ${group}`);
+		
+		if (await isUserInGroup(req.body.username, group)) {
+			log.info(`${req.body.username} is a member of ${group}; granting flag ${flag}`);
 			flags.push(flag);
-		} catch (err) {
-			log.debug('Caught error: ' + err);
-			if (err.code !== 0x20) throw err;
-			log.info(`${req.body.username} is a NOT member of ${groupDN}`);
+		} else {
+			log.info(`${req.body.username} is a NOT member of ${group}`);
 		}
 	}
 	await ldapClient.unbind();
