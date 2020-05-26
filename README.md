@@ -14,6 +14,7 @@
 - [Usage](#usage)
   - [Configuring Drawpile](#configuring-drawpile)
   - [Configuring the auth server](#configuring-the-auth-server)
+    - [Generating a token keypair](#generating-a-token-keypair)
 - [Maintainers](#maintainers)
 - [Contribute](#contribute)
 - [License](#license)
@@ -64,7 +65,7 @@ To configure Drawpile to direct clients to this auth server, add the following e
 ```ini
 ; enable extauth and direct users to the auth server
 extauth = true
-; PUBLIC key for token signing, see below
+; PUBLIC key for token signing, see "Generating a token keypair"
 extauthkey = ""
 ; users must be in this LDAP group in order to user the instance (optional)
 extauthgroup = user
@@ -87,6 +88,17 @@ Additionally, you need to pass the `--extauth` parameter to `drawpile-srv` which
 First, copy `config.example.toml` to `config.toml`. Then, open it in your favorite editor. Each config option is explained rather clearly in the config comments.
 
 For more details on TOML syntax, see [the README](https://github.com/toml-lang/toml#user-content-example).
+
+#### Generating a token keypair
+
+Drawpile uses libsodium to handle token verification, which expects a "raw" format Ed25519 public key (ie, no container format). However, OpenSSL (and therefore Node) operate on containerized keys using DER and PEM formats. As such, you will need to generate your keypair in a very specific manner.
+
+```shell
+# generate private key; this goes in config.toml
+$ PRIVKEY="$(openssl genpkey -algorithm ed25519 -outform DER | openssl base64)"; echo $PRIVKEY
+# generate public key; this goes in your Drawpile config.ini
+$ echo "$PRIVKEY" | openssl base64 -d | openssl pkey -inform DER -outform DER -pubout | tail -c +13 | openssl base64
+```
 
 ## Maintainers
 
