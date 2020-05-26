@@ -47,7 +47,7 @@ interface LDAPUser {
 }
 
 const config = require('../config.toml') as ServerConfig;
-const DEFUALT_PORT = 8081;
+const DEFAULT_PORT = 8081;
 const signingKey = crypto.createPrivateKey({
 	key: Buffer.from(config.signingKey, 'base64'),
 	format: 'der',
@@ -236,6 +236,6 @@ app.post(config.path ?? '/', async (req, res) => {
 
 log.debug('Starting with config:');
 log.debug(JSON.stringify(config, undefined, 2));
-const PORT = config.port ?? DEFUALT_PORT;
+const PORT = config.port ?? DEFAULT_PORT;
 app.listen(PORT);
 log.info(`Listening on http://127.0.0.1:${PORT}${config.path || '/'}`);
