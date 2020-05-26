@@ -1,14 +1,32 @@
 # Base64-encoded Ed25519 private key
+# See README for instructions on generating this
 signingKey = ""
+# The port this auth server should listen on. 8081 by default
+port = 8081
+# The route path the express application should look for
+# Useful if you run this behind a reverse proxy on a shared domain
+path = "/ext-auth"
+# Should guests be allowed to authenticate with the server?
+allowGuests = true
 
+# General LDAP settings
+# Additional options may be found at https://github.com/ldapts/ldapts#create-a-client
 [ldap]
+# The URL to your LDAP server
 url = "ldap://localhost:389"
+# The bind DN to access LDAP information without a user login
 bindDN = "cn=admin,dc=example,dc=com"
+# The LDAP password for the above bind user
 bindPW = "admin"
+# The DN which contains your LDAP users
 userDN = "ou=users,dc=example,dc=com"
+# The search filter to apply when searching for users
+# %u is replaced with the logging-in user's username
 userSearchFilter = "(uid=%u)"
 # DN which contains your LDAP groups
 groupDN = "ou=drawpile,ou=groups,dc=example,dc=com"
+# The attribute used by your server to test if a user is member of a group
+# You can probably leave this as the default
 memberOfAttribute = "memberOf"
 
 [ldap.flagGroups]

@@ -7,8 +7,9 @@ require('source-map-support').install();
 require('toml-require').install();
 
 interface ServerConfig {
-	port?: number;
 	signingKey: string;
+	port?: number;
+	path?: string;
 	allowGuests?: boolean;
 	ldap: ldapts.ClientOptions & {
 		bindDN: string;
@@ -96,7 +97,7 @@ async function findUser(username: string, group?: string): Promise<LDAPUser | nu
 		let searchFilter = config.ldap.userSearchFilter.replace('%u', username);
 		if (group) {
 			const groupDN = `cn=${group},${config.ldap.groupDN}`;
-			searchFilter = `(&${config.ldap.userSearchFilter.replace('%u', username)}(${config.ldap.memberOfAttribute}=${groupDN}))`;
+			searchFilter = `(&${config.ldap.userSearchFilter.replace(/%u/, username)}(${config.ldap.memberOfAttribute}=${groupDN}))`;
 		}
 
 		const searchResults = await ldapClient.search(config.ldap.userDN, {
@@ -136,7 +137,7 @@ async function isUserInGroup(username: string, group: string): Promise<boolean> 
 	return false;
 }
 
-app.use((req, res, next) => {
+app.use((req, _, next) => {
 	log.info('Request received from ' + req.ip);
 	log.debug('Request method: ' + req.method);
 	log.debug('Request URI: ' + req.url);
@@ -145,7 +146,7 @@ app.use((req, res, next) => {
 	next();
 });
 
-app.post('/', async (req, res) => {
+app.post(config.path ?? '/', async (req, res) => {
 	if (!req.body.username) return res.status(400).send('Bad request');
 
 	const authResponse: AuthResponse = {
@@ -235,5 +236,6 @@ app.post('/', async (req, res) => {
 
 log.debug('Starting with config:');
 log.debug(JSON.stringify(config, undefined, 2));
-app.listen(config.port || DEFUALT_PORT);
-log.info('Listening on http://127.0.0.1:' + (config.port || DEFUALT_PORT));
+const PORT = config.port ?? DEFUALT_PORT;
+app.listen(PORT);
+log.info(`Listening on http://127.0.0.1:${PORT}${config.path || '/'}`);
