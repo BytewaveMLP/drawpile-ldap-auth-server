@@ -1,5 +1,7 @@
 # Base64-encoded Ed25519 private key
 # See README for instructions on generating this
+# May also be set in the environment as DRAWPILE_AUTH_TOKEN_SIGNING_KEY, in which case
+# this option has no effect
 signingKey = ""
 # The port this auth server should listen on. 8081 by default
 port = 8081

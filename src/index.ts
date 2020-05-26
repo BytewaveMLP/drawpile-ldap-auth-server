@@ -6,8 +6,10 @@ import winston from 'winston';
 require('source-map-support').install();
 require('toml-require').install();
 
+const packageInfo = require('../package.json'); // eslint-disable-line
+
 interface ServerConfig {
-	signingKey: string;
+	signingKey?: string;
 	port?: number;
 	path?: string;
 	allowGuests?: boolean;
@@ -46,16 +48,8 @@ interface LDAPUser {
 	[key: string]: string | string[] | Buffer | Buffer[];
 }
 
-const config = require('../config.toml') as ServerConfig;
-const DEFAULT_PORT = 8081;
-const signingKey = crypto.createPrivateKey({
-	key: Buffer.from(config.signingKey, 'base64'),
-	format: 'der',
-	type: 'pkcs8',
-});
-
 const log = winston.createLogger({
-	level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+	level: process.env.LOG_LEVEL ?? (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
 	format: winston.format.combine(
 		winston.format.timestamp(),
 		winston.format.printf(info => `[${info.timestamp}] ${info.level}: ${info.message}`),
@@ -65,6 +59,27 @@ const log = winston.createLogger({
 	],
 });
 
+const config = require('../config.toml') as ServerConfig;
+
+log.info(`Starting drawpile-ldap-auth-server v${packageInfo.version}...`);
+
+const DEFAULT_PORT = 8081;
+config.port = config.port ?? DEFAULT_PORT;
+config.signingKey = process.env.DRAWPILE_AUTH_TOKEN_SIGNING_KEY || config.signingKey;
+
+log.silly('Starting with config:');
+log.silly(JSON.stringify(config, undefined, 2));
+
+if (!config.signingKey) {
+	log.error('No signing key provided!');
+	process.exit(1);
+}
+
+const signingKey = crypto.createPrivateKey({
+	key: Buffer.from(config.signingKey, 'base64'),
+	format: 'der',
+	type: 'pkcs8',
+});
 
 const ldapClient = new ldapts.Client(config.ldap);
 
@@ -104,7 +119,7 @@ async function findUser(username: string, group?: string): Promise<LDAPUser | nu
 			filter: searchFilter,
 		});
 
-		log.debug(JSON.stringify(searchResults, undefined, 2));
+		log.silly(JSON.stringify(searchResults, undefined, 2));
 
 		return searchResults.searchEntries[0] as LDAPUser;
 	} catch (err) {
@@ -138,10 +153,10 @@ async function isUserInGroup(username: string, group: string): Promise<boolean> 
 }
 
 app.use((req, _, next) => {
-	log.info('Request received from ' + req.ip);
-	log.debug('Request method: ' + req.method);
-	log.debug('Request URI: ' + req.url);
-	log.debug('Request body: ' + JSON.stringify(req.body));
+	log.http('Request received from ' + req.ip);
+	log.silly('Request method: ' + req.method);
+	log.silly('Request URI: ' + req.url);
+	log.silly('Request body: ' + JSON.stringify(req.body));
 
 	next();
 });
@@ -230,12 +245,9 @@ app.post(config.path ?? '/', async (req, res) => {
 	log.debug('Auth payload: ' + JSON.stringify(authPayload));
 
 	authResponse.token = createDrawpileAuthToken(authPayload);
-	log.debug('Auth response: ' + JSON.stringify(authResponse));
+	log.silly('Auth response: ' + JSON.stringify(authResponse));
 	return res.json(authResponse);
 });
 
-log.debug('Starting with config:');
-log.debug(JSON.stringify(config, undefined, 2));
-const PORT = config.port ?? DEFAULT_PORT;
-app.listen(PORT);
-log.info(`Listening on http://127.0.0.1:${PORT}${config.path || '/'}`);
+app.listen(config.port);
+log.info(`Listening on http://127.0.0.1:${config.port}${config.path || '/'}`);
