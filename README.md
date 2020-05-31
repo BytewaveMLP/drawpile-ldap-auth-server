@@ -89,7 +89,7 @@ First, copy `config.example.toml` to `config.toml`. Then, open it in your favori
 
 For more details on TOML syntax, see [the README](https://github.com/toml-lang/toml#user-content-example).
 
-If you would prefer, you may set configuration options through environment variables rather than through the config file. Each config option has a corresponding environment variable which will override the value listed in the config if set. Note that `ldap.flagGroups` does *not* have an associated environment variable mapping; this is the only value which *must* be set in `config.tmol`.
+If you would prefer, you may set configuration options through environment variables/command-line arguments rather than through the config file. Each config option has a corresponding environment variable/argument which will override the value listed in the config if set. Note that `ldap.flagGroups` does *not* have an associated environment variable mapping; this is the only value which *must* be set in `config.tmol`.
 
 Additionally, there are two environment-only configuration options relating to logging. These are:
 
