@@ -89,11 +89,9 @@ First, copy `config.example.toml` to `config.toml`. Then, open it in your favori
 
 For more details on TOML syntax, see [the README](https://github.com/toml-lang/toml#user-content-example).
 
-Additionally, there are a few environment variables which may be used:
+If you would prefer, you may set configuration options through environment variables rather than through the config file. Each config option has a corresponding environment variable which will override the value listed in the config if set. Note that `ldap.flagGroups` does *not* have an associated environment variable mapping; this is the only value which *must* be set in `config.tmol`.
 
-- `DRAWPILE_AUTH_TOKEN_SIGNING_KEY`
-  
-  The private Ed25519 key for Drawpile auth tokens. See ["Generating a token keypair"](#generating-a-token-keypair) below for instructions to generate this. Setting this value in the environment overrides the value in `config.toml`.
+Additionally, there are two environment-only configuration options relating to logging. These are:
 
 - `LOG_LEVEL`
 

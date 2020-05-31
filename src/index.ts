@@ -59,29 +59,49 @@ const log = winston.createLogger({
 	],
 });
 
-const config = require('../config.toml') as ServerConfig;
+const configFile = require('../config.toml') as ServerConfig;
 
 log.info(`Starting drawpile-ldap-auth-server v${packageInfo.version}...`);
 
 const DEFAULT_PORT = 8081;
-config.port = config.port ?? DEFAULT_PORT;
-config.signingKey = process.env.DRAWPILE_AUTH_TOKEN_SIGNING_KEY || config.signingKey;
+const DEFAULT_ROUTE = '/';
+
+function strToBool(str: string): boolean {
+	return ['yes', '1', 'y', 'true', 't'].includes(str);
+}
+
+const CONFIG: ServerConfig = {
+	signingKey: process.env.DRAWPILE_AUTH_TOKEN_SIGNING_KEY ?? configFile.signingKey,
+	port: process.env.PORT ? parseInt(process.env.PORT) : (configFile.port ?? DEFAULT_PORT),
+	path: process.env.ROUTE ?? configFile.path ?? DEFAULT_ROUTE,
+	allowGuests: process.env.allowGuests ? strToBool(process.env.allowGuests) : (configFile.allowGuests ?? false),
+	ldap: {
+		url: process.env.LDAP_URL ?? configFile.ldap.url,
+		bindDN: process.env.LDAP_BIND_DN ?? configFile.ldap.bindDN,
+		bindPW: process.env.LDAP_BIND_PASS ?? configFile.ldap.bindPW,
+		userDN: process.env.LDAP_USER_DN ?? configFile.ldap.userDN,
+		userSearchFilter: process.env.LDAP_USER_FILTER ?? configFile.ldap.userSearchFilter,
+		groupDN: process.env.LDAP_GROUP_DN ?? configFile.ldap.groupDN,
+		memberOfAttribute: process.env.LDAP_MEMBER_OF_ATTR ?? configFile.ldap.memberOfAttribute,
+		flagGroups: configFile.ldap.flagGroups // no easy way to get this out of the environment
+	},
+};
 
 log.silly('Starting with config:');
-log.silly(JSON.stringify(config, undefined, 2));
+log.silly(JSON.stringify(CONFIG, undefined, 2));
 
-if (!config.signingKey) {
+if (!CONFIG.signingKey) {
 	log.error('No signing key provided!');
 	process.exit(1);
 }
 
 const signingKey = crypto.createPrivateKey({
-	key: Buffer.from(config.signingKey, 'base64'),
+	key: Buffer.from(CONFIG.signingKey, 'base64'),
 	format: 'der',
 	type: 'pkcs8',
 });
 
-const ldapClient = new ldapts.Client(config.ldap);
+const ldapClient = new ldapts.Client(CONFIG.ldap);
 
 const app = express();
 app.use(express.json());
@@ -106,16 +126,16 @@ function createDrawpileAuthToken(payload: DrawpileAuthPayload, avatar?: string |
 }
 
 async function findUser(username: string, group?: string): Promise<LDAPUser | null> {
-	await ldapClient.bind(config.ldap.bindDN, config.ldap.bindPW);
+	await ldapClient.bind(CONFIG.ldap.bindDN, CONFIG.ldap.bindPW);
 
 	try {
-		let searchFilter = config.ldap.userSearchFilter.replace('%u', username);
+		let searchFilter = CONFIG.ldap.userSearchFilter.replace('%u', username);
 		if (group) {
-			const groupDN = `cn=${group},${config.ldap.groupDN}`;
-			searchFilter = `(&${config.ldap.userSearchFilter.replace(/%u/, username)}(${config.ldap.memberOfAttribute}=${groupDN}))`;
+			const groupDN = `cn=${group},${CONFIG.ldap.groupDN}`;
+			searchFilter = `(&${CONFIG.ldap.userSearchFilter.replace(/%u/, username)}(${CONFIG.ldap.memberOfAttribute}=${groupDN}))`;
 		}
 
-		const searchResults = await ldapClient.search(config.ldap.userDN, {
+		const searchResults = await ldapClient.search(CONFIG.ldap.userDN, {
 			filter: searchFilter,
 		});
 
@@ -161,7 +181,8 @@ app.use((req, _, next) => {
 	next();
 });
 
-app.post(config.path ?? '/', async (req, res) => {
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+app.post(CONFIG.path!, async (req, res) => {
 	if (!req.body.username) return res.status(400).send('Bad request');
 
 	const authResponse: AuthResponse = {
@@ -172,7 +193,7 @@ app.post(config.path ?? '/', async (req, res) => {
 	if (!req.body.password) { // server request
 		log.info(`Checking if username ${req.body.username} is available for guest access`);
 
-		if (!config.allowGuests) {
+		if (!CONFIG.allowGuests) {
 			log.info(`Guest login disabled`);
 			return res.json(authResponse);
 		}
@@ -220,9 +241,9 @@ app.post(config.path ?? '/', async (req, res) => {
 
 	const flags: string[] = [];
 
-	await ldapClient.bind(config.ldap.bindDN, config.ldap.bindPW);
-	for (const flag in config.ldap.flagGroups) {
-		const group = config.ldap.flagGroups[flag];
+	await ldapClient.bind(CONFIG.ldap.bindDN, CONFIG.ldap.bindPW);
+	for (const flag in CONFIG.ldap.flagGroups) {
+		const group = CONFIG.ldap.flagGroups[flag];
 		log.info(`Checking if ${req.body.username} is a member of ${group}`);
 		
 		if (await isUserInGroup(req.body.username, group)) {
@@ -249,5 +270,5 @@ app.post(config.path ?? '/', async (req, res) => {
 	return res.json(authResponse);
 });
 
-app.listen(config.port);
-log.info(`Listening on http://127.0.0.1:${config.port}${config.path || '/'}`);
+app.listen(CONFIG.port);
+log.info(`Listening on http://127.0.0.1:${CONFIG.port}${CONFIG.path || '/'}`);
