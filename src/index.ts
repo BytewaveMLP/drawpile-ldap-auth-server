@@ -41,7 +41,7 @@ const log = winston.createLogger({
 	],
 });
 
-log.info(`Starting drawpile-ldap-auth-server v${packageInfo.version}...`);
+log.info(`Starting ${packageInfo.name} v${packageInfo.version}...`);
 
 log.silly('Starting with config:');
 log.silly(CONFIG.toString());
