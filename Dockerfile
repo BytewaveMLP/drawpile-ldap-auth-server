@@ -20,7 +20,7 @@ COPY --from=builder dist/ ./dist/
 ENV TINI_VERSION v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static /usr/local/bin/tini
 RUN chmod +rx /usr/local/bin/tini
-ENTRYPOINT ["/usr/local/bin/tini", "-v", "--"]
+ENTRYPOINT ["/usr/local/bin/tini", "--"]
 
 USER node
 ENV NODE_ENV=production
