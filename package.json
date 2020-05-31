@@ -18,6 +18,7 @@
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx"
   },
   "devDependencies": {
+    "@types/convict": "^5.2.1",
     "@types/express": "^4.17.6",
     "@types/node": "^14.0.5",
     "@typescript-eslint/eslint-plugin": "^3.0.0",
@@ -26,10 +27,11 @@
     "typescript": "<3.8.0"
   },
   "dependencies": {
+    "convict": "^6.0.0",
     "express": "^4.17.1",
     "ldapts": "^2.5.1",
     "source-map-support": "^0.5.19",
-    "toml-require": "^1.2.0",
+    "toml": "^3.0.0",
     "winston": "^3.2.1"
   }
 }

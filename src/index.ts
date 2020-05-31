@@ -2,29 +2,11 @@ import crypto from 'crypto';
 import express from 'express';
 import * as ldapts from 'ldapts';
 import winston from 'winston';
+import { CONFIG } from './config';
 
 require('source-map-support').install();
-require('toml-require').install();
 
 const packageInfo = require('../package.json'); // eslint-disable-line
-
-interface ServerConfig {
-	signingKey?: string;
-	port?: number;
-	path?: string;
-	allowGuests?: boolean;
-	ldap: ldapts.ClientOptions & {
-		bindDN: string;
-		bindPW: string;
-		userDN: string;
-		userSearchFilter: string;
-		groupDN: string;
-		memberOfAttribute: string;
-		flagGroups: {
-			[flag: string]: string;
-		}
-	};
-}
 
 interface AuthResponse {
 	status: 'auth' | 'guest' | 'badpass' | 'outgroup' | 'banned';
@@ -59,49 +41,25 @@ const log = winston.createLogger({
 	],
 });
 
-const configFile = require('../config.toml') as ServerConfig;
-
 log.info(`Starting drawpile-ldap-auth-server v${packageInfo.version}...`);
 
-const DEFAULT_PORT = 8081;
-const DEFAULT_ROUTE = '/';
-
-function strToBool(str: string): boolean {
-	return ['yes', '1', 'y', 'true', 't'].includes(str);
-}
-
-const CONFIG: ServerConfig = {
-	signingKey: process.env.DRAWPILE_AUTH_TOKEN_SIGNING_KEY ?? configFile.signingKey,
-	port: process.env.PORT ? parseInt(process.env.PORT) : (configFile.port ?? DEFAULT_PORT),
-	path: process.env.ROUTE ?? configFile.path ?? DEFAULT_ROUTE,
-	allowGuests: process.env.allowGuests ? strToBool(process.env.allowGuests) : (configFile.allowGuests ?? false),
-	ldap: {
-		url: process.env.LDAP_URL ?? configFile.ldap.url,
-		bindDN: process.env.LDAP_BIND_DN ?? configFile.ldap.bindDN,
-		bindPW: process.env.LDAP_BIND_PASS ?? configFile.ldap.bindPW,
-		userDN: process.env.LDAP_USER_DN ?? configFile.ldap.userDN,
-		userSearchFilter: process.env.LDAP_USER_FILTER ?? configFile.ldap.userSearchFilter,
-		groupDN: process.env.LDAP_GROUP_DN ?? configFile.ldap.groupDN,
-		memberOfAttribute: process.env.LDAP_MEMBER_OF_ATTR ?? configFile.ldap.memberOfAttribute,
-		flagGroups: configFile.ldap.flagGroups // no easy way to get this out of the environment
-	},
-};
-
 log.silly('Starting with config:');
-log.silly(JSON.stringify(CONFIG, undefined, 2));
+log.silly(CONFIG.toString());
 
-if (!CONFIG.signingKey) {
+if (!CONFIG.get('signingKey')) {
 	log.error('No signing key provided!');
 	process.exit(1);
 }
 
 const signingKey = crypto.createPrivateKey({
-	key: Buffer.from(CONFIG.signingKey, 'base64'),
+	key: Buffer.from(CONFIG.get('signingKey'), 'base64'),
 	format: 'der',
 	type: 'pkcs8',
 });
 
-const ldapClient = new ldapts.Client(CONFIG.ldap);
+const ldapClient = new ldapts.Client({
+	url: CONFIG.get('ldap.url'),
+});
 
 const app = express();
 app.use(express.json());
@@ -126,16 +84,16 @@ function createDrawpileAuthToken(payload: DrawpileAuthPayload, avatar?: string |
 }
 
 async function findUser(username: string, group?: string): Promise<LDAPUser | null> {
-	await ldapClient.bind(CONFIG.ldap.bindDN, CONFIG.ldap.bindPW);
+	await ldapClient.bind(CONFIG.get('ldap.bindDN'), CONFIG.get('ldap.bindPW'));
 
 	try {
-		let searchFilter = CONFIG.ldap.userSearchFilter.replace('%u', username);
+		let searchFilter = CONFIG.get('ldap.userSearchFilter').replace(/%u/, username);
 		if (group) {
-			const groupDN = `cn=${group},${CONFIG.ldap.groupDN}`;
-			searchFilter = `(&${CONFIG.ldap.userSearchFilter.replace(/%u/, username)}(${CONFIG.ldap.memberOfAttribute}=${groupDN}))`;
+			const groupDN = `cn=${group},${CONFIG.get('ldap.groupDN')}`;
+			searchFilter = `(&${CONFIG.get('ldap.userSearchFilter').replace(/%u/, username)}(${CONFIG.get('ldap.memberOfAttribute')}=${groupDN}))`;
 		}
 
-		const searchResults = await ldapClient.search(CONFIG.ldap.userDN, {
+		const searchResults = await ldapClient.search(CONFIG.get('ldap.userDN'), {
 			filter: searchFilter,
 		});
 
@@ -181,8 +139,7 @@ app.use((req, _, next) => {
 	next();
 });
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-app.post(CONFIG.path!, async (req, res) => {
+app.post(CONFIG.get('path'), async (req, res) => {
 	if (!req.body.username) return res.status(400).send('Bad request');
 
 	const authResponse: AuthResponse = {
@@ -193,7 +150,7 @@ app.post(CONFIG.path!, async (req, res) => {
 	if (!req.body.password) { // server request
 		log.info(`Checking if username ${req.body.username} is available for guest access`);
 
-		if (!CONFIG.allowGuests) {
+		if (!CONFIG.get('allowGuests')) {
 			log.info(`Guest login disabled`);
 			return res.json(authResponse);
 		}
@@ -241,9 +198,9 @@ app.post(CONFIG.path!, async (req, res) => {
 
 	const flags: string[] = [];
 
-	await ldapClient.bind(CONFIG.ldap.bindDN, CONFIG.ldap.bindPW);
-	for (const flag in CONFIG.ldap.flagGroups) {
-		const group = CONFIG.ldap.flagGroups[flag];
+	await ldapClient.bind(CONFIG.get('ldap.bindDN'), CONFIG.get('ldap.bindPW'));
+	for (const flag in CONFIG.get('ldap.flagGroups')) {
+		const group = CONFIG.get('ldap.flagGroups')[flag];
 		log.info(`Checking if ${req.body.username} is a member of ${group}`);
 		
 		if (await isUserInGroup(req.body.username, group)) {
@@ -270,5 +227,5 @@ app.post(CONFIG.path!, async (req, res) => {
 	return res.json(authResponse);
 });
 
-app.listen(CONFIG.port);
-log.info(`Listening on http://127.0.0.1:${CONFIG.port}${CONFIG.path || '/'}`);
+app.listen(CONFIG.get('port'));
+log.info(`Listening on http://127.0.0.1:${CONFIG.get('port')}${CONFIG.get('path')}`);

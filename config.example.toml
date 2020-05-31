@@ -1,20 +1,24 @@
 # Drawpile-LDAP-Auth-Server config
 # Config options marked with "Env: NAME" may be configured in the environment as well
-# Environment variables override this file
+# Additionally, config options marked with "Arg: NAME" may be specified via command line arguments
 
 # Base64-encoded Ed25519 private key
 # See README for instructions on generating this
 # Env: DRAWPILE_AUTH_TOKEN_SIGNING_KEY
+# Arg: drawpile-auth-token-signing-key
 signingKey = ""
 # The port this auth server should listen on. 8081 by default
 # Env: PORT
+# Arg: port
 port = 8081
 # The route path the express application should look for
 # Useful if you run this behind a reverse proxy on a shared domain
 # Env: ROUTE
+# Arg: route
 path = "/ext-auth"
 # Should guests be allowed to authenticate with the server?
 # Env: ALLOW_GUESTS
+# Arg: allow-guests
 allowGuests = true
 
 # General LDAP settings
@@ -22,26 +26,33 @@ allowGuests = true
 [ldap]
 # The URL to your LDAP server
 # Env: LDAP_URL
+# Arg: ldap-url
 url = "ldap://localhost:389"
 # The bind DN to access LDAP information without a user login
 # Env: LDAP_BIND_DN
+# Arg: ldap-bind-dn
 bindDN = "cn=admin,dc=example,dc=com"
 # The LDAP password for the above bind user
 # Env: LDAP_BIND_PASS
+# Arg: ldap-bind-pass
 bindPW = "admin"
 # The DN which contains your LDAP users
 # Env: LDAP_USER_DN
+# Arg: ldap-user-dn
 userDN = "ou=users,dc=example,dc=com"
 # The search filter to apply when searching for users
 # %u is replaced with the logging-in user's username
 # Env: LDAP_USER_FILTER
+# Arg: ldap-user-filter
 userSearchFilter = "(uid=%u)"
 # DN which contains your LDAP groups
 # Env: LDAP_GROUP_DN
+# Arg: ldap-group-dn
 groupDN = "ou=drawpile,ou=groups,dc=example,dc=com"
 # The attribute used by your server to test if a user is member of a group
 # You can probably leave this as the default
 # Env: LDAP_MEMBER_OF_ATTR
+# Arg: ldap-member-of-attr
 memberOfAttribute = "memberOf"
 
 [ldap.flagGroups]
