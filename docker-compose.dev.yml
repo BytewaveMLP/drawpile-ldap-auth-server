@@ -19,7 +19,10 @@ services:
     volumes:
       - drawpile:/home/drawpile
       - ./drawpile-config.ini:/home/drawpile/drawpile-config.ini:ro
-    command: --sessions /home/drawpile/sessions --config /home/drawpile/drawpile-config.ini --extauth http://drawpile-ldap-auth-server:8081/ext-auth
+    command:
+      --sessions /home/drawpile/sessions
+      --config /home/drawpile/drawpile-config.ini
+      --extauth http://drawpile-ldap-auth-server:8081/ext-auth
     ports:
       - 27750:27750
 
