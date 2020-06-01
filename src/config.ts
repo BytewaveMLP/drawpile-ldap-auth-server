@@ -87,6 +87,13 @@ const config = convict({
 			env: 'LDAP_MEMBER_OF_ATTR',
 			arg: 'ldap-member-of-attr',
 		},
+		displayNameAttribute: {
+			doc: 'Display name to user for users',
+			format: '*',
+			default: undefined as string | undefined,
+			env: 'LDAP_DISPLAY_NAME_ATTR',
+			arg: 'ldap-display-name-attr',
+		},
 		flagGroups: {
 			doc: 'Mapping of Drawpile flags to LDAP group names',
 			format: '*',

@@ -54,6 +54,11 @@ groupDN = "ou=drawpile,ou=groups,dc=example,dc=com"
 # Env: LDAP_MEMBER_OF_ATTR
 # Arg: ldap-member-of-attr
 memberOfAttribute = "memberOf"
+# The attribute which stores display names for users
+# Optional; user display name defaults to provided username
+# Env: LDAP_DISPLAY_NAME_ATTR
+# Arg: ldap-display-name-attr
+displayNameAttribute = "displayName"
 
 [ldap.flagGroups]
 # Defines a mapping between LDAP groups and Drawpile flags

@@ -212,8 +212,14 @@ app.post(CONFIG.get('path'), async (req, res) => {
 	}
 	await ldapClient.unbind();
 
+	let username = req.body.username;
+
+	if (CONFIG.has('ldap.displayNameAttribute')) {
+		username = user[CONFIG.get('ldap.displayNameAttribute')] ?? username;
+	}
+
 	const authPayload: DrawpileAuthPayload = {
-		username: req.body.username,
+		username,
 		iat: Date.now(),
 		uid: user.entryUUID,
 		flags,
