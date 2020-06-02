@@ -36,7 +36,7 @@ $ cp config.example.toml config.toml
 $ $EDITOR config.toml # see README.md "Configuring the auth server" for details
 $ docker run -d --rm \
     -p 8081:8081 \
-    -v path/to/config.toml:/usr/src/app/config.toml:ro
+    -v path/to/config.toml:/usr/src/app/config.toml:ro \
     bytewave81/drawpile-ldap-auth-server
 ```
 
@@ -69,10 +69,10 @@ extauth = true
 extauthkey = ""
 ; users must be in this LDAP group in order to user the instance (optional)
 extauthgroup = user
-; don't fall back to the internal user database if the auth server is unreachable
+; should Drawpile fall back to the internal user database if the auth server is unreachable?
 extauthfallback = false
-; drawpile-ldap-auth-server can pull moderator status from LDAP groups; set this
-; to true if you'd like to enable that
+; drawpile-ldap-auth-server can pull moderator status from LDAP groups; set this to true if
+; you'd like to enable that
 extauthmod = true
 ; should guests be allowed to access Drawpile?
 ; this setting must match the setting in config.toml for drawpile-ldap-auth-server
