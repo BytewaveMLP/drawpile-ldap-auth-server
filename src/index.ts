@@ -196,7 +196,14 @@ app.post(CONFIG.get('path'), async (req, res) => {
 
 	log.info(`Username ${req.body.username} successfully authenticated`);
 
-	const flags: string[] = [];
+	const authPayload = {
+		username: req.body.username,
+		iat: Date.now(),
+		uid: user.entryUUID,
+		flags: [] as string[],
+		group: req.body.group,
+		nonce: req.body.nonce,
+	};
 
 	await ldapClient.bind(CONFIG.get('ldap.bindDN'), CONFIG.get('ldap.bindPW'));
 	for (const flag in CONFIG.get('ldap.flagGroups')) {
@@ -205,27 +212,17 @@ app.post(CONFIG.get('path'), async (req, res) => {
 		
 		if (await isUserInGroup(req.body.username, group)) {
 			log.info(`${req.body.username} is a member of ${group}; granting flag ${flag}`);
-			flags.push(flag);
+			authPayload.flags.push(flag);
 		} else {
 			log.info(`${req.body.username} is a NOT member of ${group}`);
 		}
 	}
 	await ldapClient.unbind();
 
-	let username = req.body.username;
-
 	if (CONFIG.has('ldap.displayNameAttribute')) {
-		username = user[CONFIG.get('ldap.displayNameAttribute')] ?? username;
+		authPayload.username = (user[CONFIG.get('ldap.displayNameAttribute')] as string) ?? authPayload.username;
 	}
 
-	const authPayload: DrawpileAuthPayload = {
-		username,
-		iat: Date.now(),
-		uid: user.entryUUID,
-		flags,
-		group: req.body.group,
-		nonce: req.body.nonce,
-	};
 	log.debug('Auth payload: ' + JSON.stringify(authPayload));
 
 	authResponse.token = createDrawpileAuthToken(authPayload);
