@@ -88,7 +88,7 @@ const config = convict({
 			arg: 'ldap-member-of-attr',
 		},
 		displayNameAttribute: {
-			doc: 'Display name to user for users',
+			doc: 'LDAP attribute used to store the display name to use for users',
 			format: '*',
 			default: undefined as string | undefined,
 			env: 'LDAP_DISPLAY_NAME_ATTR',
