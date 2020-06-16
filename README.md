@@ -77,7 +77,9 @@ extauthmod = true
 ; should guests be allowed to access Drawpile?
 ; this setting must match the setting in config.toml for drawpile-ldap-auth-server
 allowGuests = false
-; should guests be allowed to host sessions?
+; should all users be allowed to host sessions?
+; if allowGuests is false but this is true, *any* authenticated user will be allowed to host sessions
+; regardless if they have the HOST flag
 allowGuestHosts = false
 ```
 
