@@ -73,7 +73,12 @@ extauthgroup = user
 extauthfallback = false
 ; drawpile-ldap-auth-server can pull moderator status from LDAP groups; set this to true if
 ; you'd like to enable that
+; Drawpile flag: MOD
 extauthmod = true
+; drawpile-ldap-auth-server can also allow users to host sessions based on LDAP group membership;
+; set this to true if you'd like that as well
+; Drawpile flag: HOST
+extauthhost = true
 ; should guests be allowed to access Drawpile?
 ; this setting must match the setting in config.toml for drawpile-ldap-auth-server
 allowGuests = false
