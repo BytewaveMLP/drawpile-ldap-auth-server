@@ -94,6 +94,13 @@ const config = convict({
 			env: 'LDAP_DISPLAY_NAME_ATTR',
 			arg: 'ldap-display-name-attr',
 		},
+		imageAttribute: {
+			doc: 'LDAP attribute used to store profile images for users',
+			format: '*',
+			default: undefined as string | undefined,
+			env: 'LDAP_IMAGE_ATTR',
+			arg: 'ldap-image-attr',
+		},
 		flagGroups: {
 			doc: 'Mapping of Drawpile flags to LDAP group names',
 			format: '*',
