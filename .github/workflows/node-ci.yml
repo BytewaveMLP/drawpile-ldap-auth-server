@@ -1,0 +1,39 @@
+name: Node CI
+
+on:
+  push:
+    paths:
+      - src/**.ts
+      - package.json
+      - yarn.lock
+      - tsconfig.json
+      - .eslintrc.js
+  pull_request:
+    paths:
+      - src/**.ts
+      - package.json
+      - yarn.lock
+      - tsconfig.json
+      - .eslintrc.js
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [ 12.x ]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: yarn install
+      run: yarn install --frozen-lockfile
+    - run: yarn lint
+    - run: yarn build
+    # - run: yarn test
+    #   env:
+    #     CI: true
