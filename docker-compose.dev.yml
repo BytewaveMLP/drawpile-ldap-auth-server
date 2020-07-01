@@ -7,7 +7,8 @@ services:
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=development
-    volumes: 
+      - LOG_LEVEL=silly
+    volumes:
       - ./config.toml:/usr/src/app/config.toml:ro
     ports:
       - 8081:8081
@@ -26,9 +27,9 @@ services:
     ports:
       - 27750:27750
 
-volumes: 
+volumes:
   drawpile:
 
-networks: 
+networks:
   ciderandsaddle:
     external: true
