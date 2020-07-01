@@ -155,7 +155,7 @@ app.post(CONFIG.get('path'), async (req, res) => {
 			return res.json(authResponse);
 		}
 
-		const user = await findUser(req.body.username, req.body.group);
+		const user = await findUser(req.body.username);
 		if (user) {
 			log.info(`Username ${req.body.username} is taken by a registered user`);
 			return res.json(authResponse); // auth required, username taken
@@ -189,12 +189,18 @@ app.post(CONFIG.get('path'), async (req, res) => {
 	}
 
 	if (!user) {
-		log.info(`Username ${req.body.username} not found${req.body.group ? `, or not a member of group ${req.body.group}` : ''}`);
+		log.info(`Username ${req.body.username} not found`);
 		authResponse.status = 'badpass';
 		return res.json(authResponse);
 	}
 
 	log.info(`Username ${req.body.username} successfully authenticated`);
+
+	if (!await isUserInGroup(req.body.username, req.body.group)) {
+		log.info(`${req.body.username} is not a member of requisite group ${req.body.group}; cancelling authentication`);
+		authResponse.status = 'outgroup';
+		return res.json(authResponse);
+	}
 
 	const authPayload = {
 		username: req.body.username,
@@ -205,11 +211,10 @@ app.post(CONFIG.get('path'), async (req, res) => {
 		nonce: req.body.nonce,
 	};
 
-	await ldapClient.bind(CONFIG.get('ldap.bindDN'), CONFIG.get('ldap.bindPW'));
 	for (const flag in CONFIG.get('ldap.flagGroups')) {
 		const group = CONFIG.get('ldap.flagGroups')[flag];
 		log.info(`Checking if ${req.body.username} is a member of ${group}`);
-		
+
 		if (await isUserInGroup(req.body.username, group)) {
 			log.info(`${req.body.username} is a member of ${group}; granting flag ${flag}`);
 			authPayload.flags.push(flag);
@@ -217,7 +222,6 @@ app.post(CONFIG.get('path'), async (req, res) => {
 			log.info(`${req.body.username} is a NOT member of ${group}`);
 		}
 	}
-	await ldapClient.unbind();
 
 	if (CONFIG.has('ldap.displayNameAttribute')) {
 		authPayload.username = (user[CONFIG.get('ldap.displayNameAttribute')] as string) ?? authPayload.username;
