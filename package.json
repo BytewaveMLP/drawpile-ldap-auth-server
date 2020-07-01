@@ -1,6 +1,6 @@
 {
   "name": "drawpile-ldap-auth-server",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A Drawpile-compatible auth server backed by LDAP",
   "main": "dist/index.js",
   "repository": "https://github.com/BytewaveMLP/drawpile-ldap-auth-server",
