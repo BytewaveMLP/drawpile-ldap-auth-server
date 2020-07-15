@@ -76,10 +76,7 @@ function createDrawpileAuthToken(payload: DrawpileAuthPayload, avatar?: string |
 		btoa(payloadJSON),
 	];
 
-	if (avatar) {
-		components.push(typeof avatar === 'string' ? avatar : avatar.toString('base64'));
-		log.silly(components[2]);
-	}
+	if (avatar) components.push(typeof avatar === 'string' ? avatar : avatar.toString('base64'));
 
 	const signature = crypto.sign(null, Buffer.from(components.join('.'), 'utf8'), signingKey).toString('base64');
 	components.push(signature);
@@ -102,11 +99,14 @@ async function findUser(username: string, group?: string): Promise<LDAPUser | nu
 			attributes: [
 				'entryUUID',
 				CONFIG.get('ldap.displayNameAttribute'),
-				CONFIG.has('ldap.imageAttribute') && `${CONFIG.get('ldap.imageAttribute')};binary`,
+				CONFIG.get('ldap.imageAttribute')
+			],
+			explicitBufferAttributes: [
+				CONFIG.get('ldap.imageAttribute'),
 			],
 		});
 
-		log.silly(JSON.stringify(searchResults, undefined, 2));
+		// log.silly(JSON.stringify(searchResults, undefined, 2));
 
 		return searchResults.searchEntries[0] as LDAPUser;
 	} catch (err) {
@@ -242,8 +242,10 @@ app.post(CONFIG.get('path'), async (req, res) => {
 
 	if (CONFIG.has('ldap.imageAttribute') && req.body.avatar) {
 		log.debug('Avatar requested and we support avatars.');
-		const userAvatarRaw = user[`${CONFIG.get('ldap.imageAttribute')};binary`];
-		console.log(userAvatarRaw);
+		userAvatar = user[CONFIG.get('ldap.imageAttribute')] as Buffer | undefined;
+		if (Array.isArray(userAvatar)) {
+			userAvatar = userAvatar[0];
+		}
 	}
 
 	authResponse.token = createDrawpileAuthToken(authPayload, userAvatar);
