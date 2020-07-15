@@ -922,7 +922,7 @@ kuler@^2.0.0:
   resolved "https://registry.yarnpkg.com/kuler/-/kuler-2.0.0.tgz#e2c570a3800388fb44407e851531c1d670b061b3"
   integrity sha512-Xq9nH7KlWZmXAtodXDDRE7vs6DU1gTU8zYDHDiWLSip45Egwq3plLHzPn27NgvzL2r1LMPC1vdqh98sQxtqj4A==
 
-ldapts@^2.5.1:
+ldapts@^2.6.0:
   version "2.6.1"
   resolved "https://registry.yarnpkg.com/ldapts/-/ldapts-2.6.1.tgz#eb374c8b1adcd21e4557ed254e9e7900c1c7e41b"
   integrity sha512-r2Qe3VIUB7rnV8t0omwN2w9X/PVj3y+vJ5bdzjnPId9dEIOBXcuDYAmqrqEIr6YLlV9tqJlcWS623HiAjdWXgA==
