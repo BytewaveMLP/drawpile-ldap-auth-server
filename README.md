@@ -79,6 +79,10 @@ extauthmod = true
 ; set this to true if you'd like that as well
 ; Drawpile flag: HOST
 extauthhost = true
+; drawpile-ldap-auth-server may additionally retrieve user avatars from LDAP; set this to true
+; if you want Drawpile to request user avatars upon authentication
+; You must also configure ldap.imageAttribute in your drawpile-ldap-auth-server configuration
+extAuthAvatars = true
 ; should guests be allowed to access Drawpile?
 ; this setting must match the setting in config.toml for drawpile-ldap-auth-server
 allowGuests = false

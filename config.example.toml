@@ -7,16 +7,19 @@
 # Env: DRAWPILE_AUTH_TOKEN_SIGNING_KEY
 # Arg: drawpile-auth-token-signing-key
 signingKey = ""
-# The port this auth server should listen on. 8081 by default
+# Port the auth server should listen on
+# Default: 8081
 # Env: PORT
 # Arg: port
 port = 8081
-# The route path the express application should look for
+# Route to serve requests on
 # Useful if you run this behind a reverse proxy on a shared domain
+# Default: /ext-auth
 # Env: ROUTE
 # Arg: route
 path = "/ext-auth"
 # Should guests be allowed to authenticate with the server?
+# Default: false
 # Env: ALLOW_GUESTS
 # Arg: allow-guests
 allowGuests = true
@@ -24,41 +27,52 @@ allowGuests = true
 # General LDAP settings
 # Additional options may be found at https://github.com/ldapts/ldapts#create-a-client
 [ldap]
-# The URL to your LDAP server
+# URL to connect to your LDAP server
 # Env: LDAP_URL
 # Arg: ldap-url
 url = "ldap://localhost:389"
-# The bind DN to access LDAP information without a user login
+# DN of the LDAP user to bind to when looking up user info
 # Env: LDAP_BIND_DN
 # Arg: ldap-bind-dn
 bindDN = "cn=admin,dc=example,dc=com"
-# The LDAP password for the above bind user
+# Password of the LDAP user to bind to when looking up user info
 # Env: LDAP_BIND_PASS
 # Arg: ldap-bind-pass
 bindPW = "admin"
-# The DN which contains your LDAP users
+# DN where LDAP users are stored
 # Env: LDAP_USER_DN
 # Arg: ldap-user-dn
 userDN = "ou=users,dc=example,dc=com"
 # The search filter to apply when searching for users
 # %u is replaced with the logging-in user's username
+# Default: (uid=%u)
 # Env: LDAP_USER_FILTER
 # Arg: ldap-user-filter
 userSearchFilter = "(uid=%u)"
-# DN which contains your LDAP groups
+# DN where LDAP groups are stored
+# Since this library does all group lookups in this DN, you may
+# consider making an OU for Drawpile groups specifically
 # Env: LDAP_GROUP_DN
 # Arg: ldap-group-dn
 groupDN = "ou=drawpile,ou=groups,dc=example,dc=com"
-# The attribute used by your server to test if a user is member of a group
+# memberOf attribute used by your LDAP server
 # You can probably leave this as the default
+# Default: memberOf
 # Env: LDAP_MEMBER_OF_ATTR
 # Arg: ldap-member-of-attr
 memberOfAttribute = "memberOf"
-# The attribute which stores display names for users
+# LDAP attribute used to store the display name to use for users
 # Optional; user display name defaults to provided username
 # Env: LDAP_DISPLAY_NAME_ATTR
 # Arg: ldap-display-name-attr
 displayNameAttribute = "displayName"
+# LDAP attribute used to store profile images for users
+# Optional; no avatars will be served if this isn't set
+# Drawpile must also be configured to request auth server avatars by setting
+# extAuthAvatars = true
+# Env: LDAP_IMAGE_ATTR
+# Arg: ldap-image-attr
+imageAttribute = "jpegPhoto"
 
 [ldap.flagGroups]
 # Defines a mapping between LDAP groups and Drawpile flags
