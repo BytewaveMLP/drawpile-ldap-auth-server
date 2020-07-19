@@ -27,3 +27,7 @@ ENV NODE_ENV=production
 ENV PORT=8081
 EXPOSE ${PORT}
 CMD [ "node", "." ]
+
+LABEL description="A Drawpile-compatible auth server backed by LDAP"
+LABEL maintainer="Eliot Partridge <byte@code.horse> (https://code.horse)"
+LABEL respository="https://github.com/BytewaveMLP/drawpile-ldap-auth-server"
