@@ -38,8 +38,13 @@ jobs:
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
 
+          echo "Pushing :$VERSION..."
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
+
           [ "$VERSION" != "dev" ] \
+            && echo "Pushing :latest..." \
             && docker tag $IMAGE_NAME $IMAGE_ID:latest \
             && docker push $IMAGE_ID:latest
+
+          echo "All done!"
