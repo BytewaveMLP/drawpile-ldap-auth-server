@@ -27,7 +27,7 @@
     "typescript": "<3.8.0"
   },
   "dependencies": {
-    "convict": "^6.0.0",
+    "convict": "^6.2.3",
     "express": "^4.17.1",
     "ldapts": "^2.6.0",
     "source-map-support": "^0.5.19",
