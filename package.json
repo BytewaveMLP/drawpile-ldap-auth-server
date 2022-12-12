@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "convict": "^6.2.3",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "ldapts": "^2.6.0",
     "source-map-support": "^0.5.19",
     "toml": "^3.0.0",
